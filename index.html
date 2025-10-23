@@ -3,115 +3,76 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>학생 체크리스트</title>
-  <meta name="description" content="학급용 학생 체크리스트. 라이트 테마, 숨김/삭제, 전체 확인(진행중·미완료), 이름 일괄입력, 6상태 순환, 설정 모달(제외 번호/이름 자동)." />
+  <title>체크리스트</title>
+  <meta name="description" content="학급용 학생 체크리스트 안정판. 라이트 테마, 숨김/삭제, 전체 확인(진행중·미완료), 이름 일괄입력, 6상태 순환, 설정 모달(제외 번호/이름 자동), JSON 내보내기/가져오기." />
   <style>
-    :root {
-      --bg: #f7f8fa; --panel: #ffffff; --text: #111827; --muted: #6b7280; --border: #e5e7eb;
-      --ok: #16a34a; --doing: #3b82f6; --recheck: #f59e0b; --overdue: #ef4444; --todo: #6b7280; --excluded: #9ca3af;
-      --accent: #2563eb; --chip: #f3f4f6; --shadow: 0 8px 20px rgba(0,0,0,.08);
-    }
-    html, body { height: 100%; }
-    body { margin:0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif; color: var(--text); background: var(--bg); }
-    .wrap{ max-width: 1200px; margin: 24px auto; padding: 0 16px; display:grid; grid-template-columns: 280px 1fr; gap: 16px; }
-
-    .side{ background: var(--panel); border:1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); padding: 16px; display:flex; flex-direction:column; }
-    .side h1{ font-size: 18px; margin: 0 0 8px 0; display:flex; align-items:center; justify-content:space-between; }
-
-    .row{ display:flex; gap:8px; align-items:center; margin-bottom: 10px; }
-    .row label{ font-size: 12px; color: var(--muted); }
-    select, input[type="number"], input[type="text"], textarea{ background: #fff; color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 8px; width: 100%; }
-    .h38{ height:38px; }
-
-    .btn{ background:#ffffff; color:var(--text); border:1px solid var(--border); padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600; }
-    .btn.primary{ background: var(--accent); color:#fff; border-color:#1d4ed8; }
-    .btn.danger{ background: #ef4444; color:#fff; border-color: #b91c1c; }
-    .btn.ghost{ background: transparent; }
-    .btn:active{ transform: translateY(1px); }
-
-    /* ---- 생성 UX 정렬 ---- */
-    #newTitle{ max-width: 200px; }
-    input.h38{ height:38px; padding:0 12px; box-sizing:border-box; }
-    button.h38{ height:38px; display:inline-flex; align-items:center; }
-    .row .btn{ white-space:nowrap; }
-    #newList, #resetBtn{ width: 80px; }
-
-    /* ---- 숨김 리스트 표시 ---- */
-    .listitem.hidden{ opacity: .55; }
-
-    .listbox{ border:1px solid var(--border); border-radius: 12px; overflow: auto; background: #fff; flex:1 1 auto; min-height: 160px; }
-    .listitem{ display:grid; grid-template-columns: 1fr auto; align-items:center; gap:6px; padding:10px 12px; border-bottom:1px solid var(--border); cursor:pointer; }
-    .listitem.active{ outline:2px solid var(--accent); background: #eef2ff; }
-    .listitem:last-child{ border-bottom:none; }
-    .listitem small{ color: var(--muted); }
-
-    .main{ display:flex; flex-direction: column; gap: 12px; }
-    .panel{ background: var(--panel); border:1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); }
-
-    .head{ display:flex; align-items:center; justify-content: space-between; gap: 10px; padding: 12px 14px; }
-    .titleline{ display:flex; gap:8px; align-items:center; }
-    .titleline input{ width: 260px; }
-
-    .grid{ display:grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 12px; }
-    @media (max-width: 960px){ .grid{ grid-template-columns: repeat(4, 1fr);} }
-    @media (max-width: 720px){ .grid{ grid-template-columns: repeat(3, 1fr);} }
-
-    .card{ background:#ffffff; border:1px solid var(--border); border-radius: 12px; padding: 10px; height: 80px; display:flex; flex-direction:column; gap:4px; justify-content:center; align-items:center; font-weight:700; text-align:center; }
-    .card .no{ font-size: 12px; opacity:.85; }
-    .card .nm{ font-size: 12px; font-weight:600; opacity:.95; }
-    .card button{ width:100%; border:none; background: transparent; color: inherit; font: inherit; cursor:pointer; }
-    .card.ok{ background: #e8f8ed; border-color: #86efac; }
-    .card.doing{ background: #eef2ff; border-color: #93c5fd; }
-    .card.recheck{ background: #fff7ed; border-color: #fcd34d; }
-    .card.overdue{ background: #fee2e2; border-color: #fecaca; }
-    .card.todo{ background: #f3f4f6; border-color: #e5e7eb; }
-    .card.excluded{ background: #f9fafb; border-color: #e5e7eb; color:#9ca3af; }
-
-    .legend{ display:flex; gap:8px; flex-wrap: wrap; align-items:center; padding: 0 12px 12px; }
-    .chip{ display:inline-flex; align-items:center; gap:6px; background: var(--chip); border:1px solid var(--border); padding:6px 10px; border-radius:999px; font-size:12px; color:var(--muted); }
-    .dot{ width:8px; height:8px; border-radius:50%; display:inline-block; }
-    .dot.ok{ background:var(--ok);} .dot.doing{ background:var(--doing);} .dot.recheck{ background:var(--recheck);} .dot.overdue{ background:var(--overdue);} .dot.todo{ background:var(--todo);} .dot.excluded{ background:var(--excluded);} 
-
-    .progress{ padding: 12px; }
-    .barwrap{ height: 14px; background: #f3f4f6; border:1px solid var(--border); border-radius:999px; overflow: clip; }
-    .bar{ height:100%; width:0%; background: linear-gradient(90deg, var(--ok), var(--doing)); }
-    .stats{ display:grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-top: 10px; }
-    .stat{ text-align:center; border:1px solid var(--border); border-radius: 10px; padding: 8px; background: #fafafa; }
-    .stat b{ display:block; font-size: 14px; }
-    .stat small{ color: var(--muted); }
-
-    details.bulk{ border-top:1px solid var(--border); }
-    details.bulk summary{ cursor:pointer; padding: 10px 12px; color:var(--muted); }
-    .bulkbox{ padding: 0 12px 12px; display:flex; gap:8px; flex-wrap: wrap; }
-    .bulkbox textarea{ width:100%; min-height: 110px; }
-
-    .toolbar{ display:flex; gap:8px; align-items:center; }
-
-    .sumwrap{ padding: 0 12px 12px; display:grid; gap:8px; }
-    .sumrow{ border:1px solid var(--border); border-radius:10px; padding:8px; background: #fafafa; }
-    .sumrow b{ display:block; margin-bottom:6px; }
-
-    .numgrid{ display:grid; grid-template-columns: repeat(9, 1fr); gap:6px; }
-    .numgrid.side{ grid-template-columns: repeat(6, 1fr); }
-    .summarySide{ margin-top:12px; border-top:1px solid var(--border); padding-top:12px; }
-    .numgrid .numbtn{ border:1px solid var(--border); border-radius:8px; padding:6px 0; background:#fff; text-align:center; cursor:default; }
-    .numgrid .numbtn.attn{ background:#e8f8ed; border-color:#86efac; color:#065f46; font-weight:700; }
-
-    /* ===== Modal (confirm/prompt + 설정) ===== */
-    .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; align-items:center; justify-content:center; z-index:9999; }
-    .modal{ width: min(520px, 92vw); background:#fff; border:1px solid var(--border); border-radius:16px; box-shadow: var(--shadow); padding:16px; }
-    .modal h3{ margin:0 0 8px; font-size:16px; }
-    .modal p{ margin:0 0 12px; color:var(--muted); }
-    .modal .actions{ display:flex; gap:8px; justify-content:flex-end; }
-    .modal input[type="text"]{ width:100%; margin:8px 0 12px; }
-
-    .iconbtn{ border:1px solid var(--border); background:#fff; border-radius:10px; padding:6px 10px; cursor:pointer; font-weight:600; }
-    .backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; align-items:center; justify-content:center; z-index:9999; }
-    .sheet{ width:min(820px,95vw); max-height:90vh; overflow:auto; background:#fff; border:1px solid var(--border); border-radius:16px; box-shadow: var(--shadow); padding:16px; }
-    .sheet h2{ margin:0 0 12px; font-size:18px; }
-    .cardbox{ border:1px solid var(--border); border-radius:12px; background:#f9fafb; padding:14px; margin-bottom:12px; }
-    .sheet .row{ margin-bottom:8px; }
-    .sheet small{ color:var(--muted); }
+    :root { --bg:#f7f8fa; --panel:#fff; --text:#111827; --muted:#6b7280; --border:#e5e7eb; --ok:#16a34a; --doing:#3b82f6; --recheck:#f59e0b; --overdue:#ef4444; --todo:#6b7280; --excluded:#9ca3af; --accent:#2563eb; --chip:#f3f4f6; --shadow:0 8px 20px rgba(0,0,0,.08);} 
+    html,body{height:100%} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif;color:var(--text);background:var(--bg)}
+    .wrap{max-width:1200px;margin:24px auto;padding:0 16px;display:grid;grid-template-columns:280px 1fr;gap:16px}
+    .side{background:var(--panel);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column}
+    .side h1{font-size:18px;margin:0 0 8px;display:flex;align-items:center;justify-content:space-between}
+    .row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+    .row label{font-size:12px;color:var(--muted)}
+    select,input[type="number"],input[type="text"],textarea{background:#fff;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px;width:100%}
+    .h38{height:34px}
+    .btn{background:#fff;color:var(--text);border:1px solid var(--border);padding:6px 10px;border-radius:10px;cursor:pointer;font-weight:600} 
+    .btn.primary{background:var(--accent);color:#fff;border-color:#1d4ed8}
+    .btn.danger{background:#ef4444;color:#fff;border-color:#b91c1c}
+    .btn.ghost{background:transparent}
+    .btn:active{transform:translateY(1px)}
+    #newTitle{max-width:200px} input.h38{height:34px;padding:0 10px;box-sizing:border-box} button.h38{height:34px;display:inline-flex;align-items:center}
+    .row .btn{white-space:nowrap} #newList,#resetBtn{width:80px}
+    .listitem.hidden{opacity:.55}
+    .listbox{border:1px solid var(--border);border-radius:12px;overflow:auto;background:#fff;flex:1 1 auto;min-height:160px}
+    .listitem{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px;padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer}
+    .listitem.active{outline:2px solid var(--accent);background:#eef2ff}
+    .listitem:last-child{border-bottom:none}
+    .listitem small{color:var(--muted)}
+    .main{display:flex;flex-direction:column;gap:12px}
+    .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow)}
+    .head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px}
+    .titleline{display:flex;gap:8px;align-items:center} .titleline input{width:260px}
+    .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:12px}
+    @media (max-width:960px){.grid{grid-template-columns:repeat(4,1fr)}}
+    @media (max-width:720px){.grid{grid-template-columns:repeat(3,1fr)}}
+    .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:8px;height:72px;display:flex;flex-direction:column;gap:2px;justify-content:space-between;align-items:center;font-weight:700;text-align:center} 
+    .card .no{font-size:12px;opacity:.85;line-height:1.2} .card .nm{font-size:12px;font-weight:600;opacity:.95;line-height:1.2}
+    .card button{width:100%;border:none;background:transparent;color:inherit;font:inherit;cursor:pointer;line-height:1.2;padding:0} 
+    .card.ok{background:#e8f8ed;border-color:#86efac}
+    .card.doing{background:#eef2ff;border-color:#93c5fd}
+    .card.recheck{background:#fff7ed;border-color:#fcd34d}
+    .card.overdue{background:#fee2e2;border-color:#fecaca}
+    .card.todo{background:#f3f4f6;border-color:#e5e7eb}
+    .card.excluded{background:#f9fafb;border-color:#e5e7eb;color:#9ca3af}
+    .legend{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:0 12px 12px}
+    .chip{display:inline-flex;align-items:center;gap:6px;background:var(--chip);border:1px solid var(--border);padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted)}
+    .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+    .dot.ok{background:var(--ok)} .dot.doing{background:var(--doing)} .dot.recheck{background:var(--recheck)} .dot.overdue{background:var(--overdue)} .dot.todo{background:var(--todo)} .dot.excluded{background:var(--excluded)}
+    .progress{padding:12px} .barwrap{height:14px;background:#f3f4f6;border:1px solid var(--border);border-radius:999px;overflow:clip}
+    .bar{height:100%;width:0%;background:linear-gradient(90deg,var(--ok),var(--doing))}
+    .stats{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:10px}
+    .stat{text-align:center;border:1px solid var(--border);border-radius:10px;padding:8px;background:#fafafa}
+    .stat b{display:block;font-size:14px} .stat small{color:var(--muted)}
+    details.bulk{border-top:1px solid var(--border)} details.bulk summary{cursor:pointer;padding:10px 12px;color:var(--muted)}
+    .bulkbox{padding:0 12px 12px;display:flex;gap:8px;flex-wrap:wrap} .bulkbox textarea{width:100%;min-height:110px}
+    .toolbar{display:flex;gap:8px;align-items:center}
+    .sumwrap{padding:0 12px 12px;display:grid;gap:8px}
+    .sumrow{border:1px solid var(--border);border-radius:10px;padding:8px;background:#fafafa}
+    .sumrow b{display:block;margin-bottom:6px}
+    .numgrid{display:grid;grid-template-columns:repeat(9,1fr);gap:6px}
+    .numgrid.side{grid-template-columns:repeat(6,1fr)}
+    .summarySide{margin-top:12px;border-top:1px solid var(--border);padding-top:12px}
+    .numgrid .numbtn{border:1px solid var(--border);border-radius:8px;padding:6px 0;background:#fff;text-align:center;cursor:default}
+    .numgrid .numbtn.attn{background:#e8f8ed;border-color:#86efac;color:#065f46;font-weight:700}
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:9999}
+    .modal{width:min(520px,92vw);background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);padding:16px}
+    .modal h3{margin:0 0 8px;font-size:16px} .modal p{margin:0 0 12px;color:var(--muted)} .modal .actions{display:flex;gap:8px;justify-content:flex-end}
+    .modal input[type="text"]{width:100%;margin:8px 0 12px}
+    .iconbtn{border:1px solid var(--border);background:#fff;border-radius:10px;padding:5px 10px;cursor:pointer;font-weight:600} 
+    .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:9999}
+    .sheet{width:min(820px,95vw);max-height:90vh;overflow:auto;background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);padding:16px}
+    .sheet h2{margin:0 0 12px;font-size:18px} .cardbox{border:1px solid var(--border);border-radius:12px;background:#f9fafb;padding:14px;margin-bottom:12px}
+    .sheet .row{margin-bottom:8px} .sheet small{color:var(--muted)}
   </style>
 </head>
 <body>
@@ -119,7 +80,7 @@
     <aside class="side">
       <h1>
         체크몬 <button id="openSettings" class="iconbtn" title="설정">설정</button>
-        <label style="display:flex; align-items:center; gap:6px; font-weight:600; font-size:12px;">
+        <label style="display:flex;align-items:center;gap:6px;font-weight:600;font-size:12px;">
           <input id="toggleHidden" type="checkbox" /> 숨김 보기
         </label>
       </h1>
@@ -139,13 +100,11 @@
       <div class="row">
         <input id="listSearch" type="text" placeholder="리스트 검색 (제목)" />
       </div>
-
-      <div class="row" style="justify-content: space-between;">
+      <div class="row" style="gap:8px;justify-content:flex-start;">
         <button id="exportBtn" class="btn ghost">내보내기</button>
         <button id="importBtn" class="btn ghost">가져오기</button>
         <button id="resetBtn" class="btn danger">초기화</button>
       </div>
-
       <div class="listbox" id="listbox"></div>
       <div class="summarySide">
         <div class="sumrow">
@@ -154,7 +113,6 @@
         </div>
       </div>
     </aside>
-
     <main class="main">
       <section class="panel">
         <div class="head">
@@ -166,7 +124,6 @@
             <button id="deleteCurrent" class="btn danger">삭제</button>
           </div>
         </div>
-
         <div class="grid" id="grid"></div>
         <div class="legend">
           <span class="chip"><span class="dot todo"></span>미완료</span>
@@ -176,7 +133,6 @@
           <span class="chip"><span class="dot overdue"></span>미제출마감</span>
           <span class="chip"><span class="dot excluded"></span>제외</span>
         </div>
-
         <div class="progress">
           <div class="barwrap"><div id="bar" class="bar"></div></div>
           <div class="stats">
@@ -188,7 +144,6 @@
             <div class="stat"><b id="s-excluded">0명</b><small>제외</small></div>
           </div>
         </div>
-
         <details class="bulk">
           <summary>전체 변경 / 이름 일괄 입력</summary>
           <div class="bulkbox">
@@ -205,12 +160,10 @@
             <button id="applyNames" class="btn">이름 적용</button>
           </div>
         </details>
-
       </section>
     </main>
   </div>
 
-  <!-- confirm/prompt Modal -->
   <div id="dlgBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal" role="document">
       <h3 id="dlgTitle">확인</h3>
@@ -223,23 +176,22 @@
     </div>
   </div>
 
-  <!-- Settings Modal -->
   <div id="settingsBack" class="backdrop" aria-hidden="true">
     <div class="sheet" role="document">
       <h2>설정</h2>
       <div class="cardbox">
         <b>제외할 번호 설정</b>
         <div class="row"><input id="setExcluded" type="text" placeholder="예: 5, 6, 21, 22" /></div>
-        <small>쉼표로 구분해 입력하세요. 새 체크리스트 생성 시 해당 번호는 건너뜁니다(A안).</small>
-        <div style="text-align:right; margin-top:8px;"><button id="saveExcluded" class="btn">저장</button></div>
+        <small>쉼표로 구분해 입력하세요. 새 체크리스트 생성 시 해당 번호는 건너뜁니다.</small>
+        <div style="text-align:right;margin-top:8px;"><button id="saveExcluded" class="btn">저장</button></div>
       </div>
       <div class="cardbox">
-        <label style="display:inline-flex; gap:6px; align-items:center; font-weight:600;"><input id="setUseNames" type="checkbox" /> 학생 이름 사용</label>
+        <label style="display:inline-flex;gap:6px;align-items:center;font-weight:600;"><input id="setUseNames" type="checkbox" /> 학생 이름 사용</label>
         <div class="row"><textarea id="setNames" placeholder="홍길동\n김영희\n이철수"></textarea></div>
         <small>줄바꿈으로 구분하여 입력하세요. 새 체크리스트를 만들 때 순서대로 적용됩니다.</small>
-        <div style="text-align:right; margin-top:8px;"><button id="saveNames" class="btn">저장</button></div>
+        <div style="text-align:right;margin-top:8px;"><button id="saveNames" class="btn">저장</button></div>
       </div>
-      <div style="text-align:right; display:flex; gap:8px; justify-content:flex-end;">
+      <div style="text-align:right;display:flex;gap:8px;justify-content:flex-end;">
         <button id="closeSettings" class="btn">닫기</button>
       </div>
     </div>
@@ -247,188 +199,63 @@
 
   <script>
   (function(){
-    function $(s, el){ return (el||document).querySelector(s); }
-    function $$(s, el){ return Array.prototype.slice.call((el||document).querySelectorAll(s)); }
+    function $(s,el){return (el||document).querySelector(s)} function $$(s,el){return Array.prototype.slice.call((el||document).querySelectorAll(s))}
+    var STORAGE='checkmon.db.v1'; var STORAGE_SETTINGS='student-checklists.settings.v1';
+    var STATES=[{key:'todo',label:'미완료',className:'todo'},{key:'ok',label:'완료',className:'ok'},{key:'doing',label:'진행중',className:'doing'},{key:'recheck',label:'완료2',className:'recheck'},{key:'overdue',label:'미제출마감',className:'overdue'},{key:'excluded',label:'제외',className:'excluded'}];
+    var stateOrder=STATES.map(function(s){return s.key});
+    function load(){try{var raw=localStorage.getItem(STORAGE);if(raw) return JSON.parse(raw)}catch(e){} return {lists:[],meta:{schemaVersion:1}}}
+    function save(){try{localStorage.setItem(STORAGE,JSON.stringify(db))}catch(e){}}
+    var settings=(function(){try{return JSON.parse(localStorage.getItem(STORAGE_SETTINGS)||'{}')||{}}catch(e){return {}}})(); if(!settings.excluded) settings.excluded=[]; if(!settings.names) settings.names=[]; settings.useNames=!!settings.useNames;
+    function uid(){return Math.random().toString(36).slice(2,9)}
+    function parseExcludedInput(raw){raw=(raw||'').replace(/\s+/g,'');var arr=raw?raw.split(','):[];var nums=[];for(var i=0;i<arr.length;i++){var x=parseInt(arr[i],10);if(!isNaN(x)) nums.push(x)}return nums}
 
-    var STORAGE = 'student-checklists.v5-es5';
-    var STORAGE_SETTINGS = 'student-checklists.settings.v1';
+    var db=load(); var currentId=null; var SCHEMA_VERSION=1;
 
-    var STATES = [
-      { key:'todo', label:'미완료', className:'todo' },
-      { key:'ok', label:'완료', className:'ok' },
-      { key:'doing', label:'진행중', className:'doing' },
-      { key:'recheck', label:'완료2', className:'recheck' },
-      { key:'overdue', label:'미제출마감', className:'overdue' },
-      { key:'excluded', label:'제외', className:'excluded' }
-    ];
-    var stateOrder = STATES.map(function(s){ return s.key; });
-    var ATTENTION = { doing:1, todo:1 };
+    function createList(opts){opts=opts||{};var title=(typeof opts.title==='string'&&opts.title)?opts.title:'체크리스트 '+(db.lists.length+1);var want=(typeof opts.count==='number'&&opts.count>0)?opts.count:18;var id=uid();var items=[];var excluded={};for(var ei=0;ei<(settings.excluded||[]).length;ei++){var v=parseInt(settings.excluded[ei],10);if(!isNaN(v)) excluded[v]=1}var n=1;while(items.length<want){if(!excluded[n]) items.push({no:n,name:'',status:'todo'});n++}if(settings.useNames&&settings.names&&settings.names.length){for(var k=0;k<items.length;k++){if(settings.names[k]) items[k].name=settings.names[k]}}var meta={id:id,title:title,count:items.length,hidden:false,created:Date.now(),updated:Date.now(),author:'교사'};var list={meta:meta,items:items};db.lists.unshift(list);currentId=id;save();renderSide();renderMain()}
+    function findListById(id){for(var i=0;i<db.lists.length;i++){if(db.lists[i].meta.id===id) return db.lists[i]}return null}
+    function getCurrent(){return findListById(currentId)}
 
-    var db = load() || { lists: [] };
-    var currentId = null;
+    function renderSide(){var box=$('#listbox');box.innerHTML='';var showHidden=$('#toggleHidden')&&$('#toggleHidden').checked;var qEl=$('#listSearch');var q=(qEl&&qEl.value?qEl.value:'').replace(/^\s+|\s+$/g,'').toLowerCase();for(var i=0;i<db.lists.length;i++){var l=db.lists[i];if(l.meta.hidden&&!showHidden) continue; if(q&&l.meta.title.toLowerCase().indexOf(q)===-1) continue;var div=document.createElement('div');div.className='listitem'+(l.meta.id===currentId?' active':'')+(l.meta.hidden?' hidden':'');div.innerHTML='<div>'+(l.meta.hidden?'🙈 ':'')+l.meta.title+'</div><small>'+new Date(l.meta.updated).toLocaleDateString()+'</small>'; (function(id){div.addEventListener('click',function(){currentId=id;renderSide();renderMain()})})(l.meta.id);box.appendChild(div)} renderSummaryAggregated()}
 
-    // settings load
-    var settings = (function(){ try { return JSON.parse(localStorage.getItem(STORAGE_SETTINGS)||'{}')||{}; } catch(e){ return {}; } })();
-    if(!settings.excluded) settings.excluded=[]; if(!settings.names) settings.names=[]; settings.useNames=!!settings.useNames;
+    function setCount(n){var cur=getCurrent(); if(!cur) return; var want=n>0?n:1; var excluded={}; for(var ei=0;ei<(settings.excluded||[]).length;ei++){var v=parseInt(settings.excluded[ei],10);if(!isNaN(v)) excluded[v]=1} var targetNos=[]; var c=1; while(targetNos.length<want){if(!excluded[c]) targetNos.push(c); c++} var out=[]; for(var j=0;j<targetNos.length;j++){ if(cur.items[j]){cur.items[j].no=targetNos[j]; out.push(cur.items[j])} else {out.push({no:targetNos[j],name:'',status:'todo'})}} cur.items=out; cur.meta.count=out.length; cur.meta.updated=Date.now(); save(); renderMain(); renderSide()}
 
-    function uid(){ return Math.random().toString(36).slice(2,9); }
+    function renderMain(){var cur=getCurrent(); var grid=$('#grid'); if(!cur){grid.innerHTML='';['s-todo','s-ok','s-doing','s-recheck','s-overdue','s-excluded'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='0명'}); var bar=document.getElementById('bar'); if(bar) bar.style.width='0%'; return} $('#boardTitle').value=cur.meta.title; $('#studentCount').value=cur.meta.count; var hideBtn=document.getElementById('hideCurrent'); if(hideBtn) hideBtn.textContent=cur.meta.hidden?'보임':'숨김'; grid.innerHTML=''; for(var k=0;k<cur.items.length;k++){var it=cur.items[k]; var card=document.createElement('div'); card.className='card '+it.status; card.setAttribute('data-idx',String(k)); var no=document.createElement('div'); no.className='no'; no.textContent=String(it.no)+'번'; var nm=document.createElement('div'); nm.className='nm'; nm.textContent=it.name||''; var btn=document.createElement('button'); btn.className='stateBtn'; btn.textContent=getStateLabel(it.status); card.appendChild(no); card.appendChild(nm); card.appendChild(btn); (function(idx){card.addEventListener('click',function(ev){ if(ev.detail===2){ promptDialog(String(cur.items[idx].no)+'번 이름',cur.items[idx].name||'',function(newName){ if(newName!==null){cur.items[idx].name=String(newName).replace(/^\s+|\s+$/g,''); cur.meta.updated=Date.now(); save(); renderMain(); renderSide() } }); return } cycleStatus(idx) })})(k); grid.appendChild(card)} renderStats(cur); renderSummaryAggregated()}
 
-    // ===== createList (A안 + 이름 자동) =====
-    function createList(opts){
-      opts = opts || {};
-      var title = (typeof opts.title==='string' && opts.title) ? opts.title : '체크리스트 1';
-      var want  = (typeof opts.count==='number' && opts.count>0) ? opts.count : 18;
-      var id = uid();
-      var items = [];
-      var excluded = {}; for(var ei=0; ei<(settings.excluded||[]).length; ei++){ var v=parseInt(settings.excluded[ei],10); if(!isNaN(v)) excluded[v]=1; }
-      var n=1; while(items.length<want){ if(!excluded[n]) items.push({ no:n, name:'', status:'todo' }); n++; }
-      if(settings.useNames && settings.names && settings.names.length){ for(var k=0;k<items.length;k++){ if(settings.names[k]) items[k].name=settings.names[k]; } }
-      var meta = { id:id, title:title, count:items.length, hidden:false, created: Date.now(), updated: Date.now(), author:'교사' };
-      var list = { meta:meta, items:items };
-      db.lists.unshift(list);
-      currentId = id; save(); renderSide(); renderMain();
-    }
+    function getStateLabel(key){for(var i=0;i<STATES.length;i++){if(STATES[i].key===key) return STATES[i].label} return key}
+    function cycleStatus(idx){var cur=getCurrent(); if(!cur) return; var it=cur.items[idx]; var pos=stateOrder.indexOf(it.status); var next=stateOrder[(pos+1)%stateOrder.length]; it.status=next; cur.meta.updated=Date.now(); save(); renderMain(); renderSide()}
 
-    function findListById(id){ for(var i=0;i<db.lists.length;i++){ if(db.lists[i].meta.id===id) return db.lists[i]; } return null; }
-    function getCurrent(){ return findListById(currentId); }
+    function renderStats(cur){var total=cur.meta.count||1; var count={todo:0,ok:0,doing:0,recheck:0,overdue:0,excluded:0}; for(var i=0;i<cur.items.length;i++){count[cur.items[i].status]++} document.getElementById('s-todo').textContent=String(count.todo)+'명'; document.getElementById('s-ok').textContent=String(count.ok)+'명'; document.getElementById('s-doing').textContent=String(count.doing)+'명'; document.getElementById('s-recheck').textContent=String(count.recheck)+'명'; document.getElementById('s-overdue').textContent=String(count.overdue)+'명'; document.getElementById('s-excluded').textContent=String(count.excluded)+'명'; document.getElementById('bar').style.width=String(Math.round(count.ok*100/total))+'%'}
 
-    function save(){ try{ localStorage.setItem(STORAGE, JSON.stringify(db)); }catch(e){} }
-    function load(){ try{ return JSON.parse(localStorage.getItem(STORAGE)); }catch(e){ return null; } }
+    function renderSummaryAggregated(){var containers=[]; var g1=document.getElementById('numGrid'); if(g1) containers.push(g1); var g2=document.getElementById('numGridSide'); if(g2) containers.push(g2); if(containers.length===0) return; var toggle=$('#toggleHidden'); var includeHidden=!!(toggle&&toggle.checked); var lists=[]; for(var i=0;i<db.lists.length;i++){ if(includeHidden||!db.lists[i].meta.hidden) lists.push(db.lists[i]) } var maxCount=0; for(var j=0;j<lists.length;j++){ maxCount=Math.max(maxCount,lists[j].meta.count||0)} var COMPLETED={ok:1,recheck:1,excluded:1,overdue:1}; for(var c=0;c<containers.length;c++){ var grid=containers[c]; grid.innerHTML=''; for(var n=0;n<maxCount;n++){ var attn=false; for(var li=0;li<lists.length;li++){ var it=lists[li].items[n]; if(!it) continue; if(!COMPLETED[it.status]){attn=true; break} } var div=document.createElement('div'); div.className='numbtn'+(attn?' attn':''); div.textContent=String(n+1); grid.appendChild(div) } } }
 
-    function renderSide(){
-      var box = $('#listbox'); box.innerHTML = '';
-      var showHidden = $('#toggleHidden') && $('#toggleHidden').checked;
-      var qEl = $('#listSearch'); var q = (qEl && qEl.value ? qEl.value : '').replace(/^\s+|\s+$/g,'').toLowerCase();
-      for(var i=0;i<db.lists.length;i++){
-        var l = db.lists[i]; if(l.meta.hidden && !showHidden) continue; if(q && l.meta.title.toLowerCase().indexOf(q)===-1) continue;
-        var div = document.createElement('div');
-        div.className = 'listitem' + (l.meta.id===currentId? ' active':'') + (l.meta.hidden? ' hidden':'');
-        div.innerHTML = '<div>'+ (l.meta.hidden? '🙈 ':'') + l.meta.title + '</div><small>'+ new Date(l.meta.updated).toLocaleDateString() +'</small>';
-        (function(id){ div.addEventListener('click', function(){ currentId=id; renderSide(); renderMain(); }); })(l.meta.id);
-        box.appendChild(div);
-      }
-      renderSummaryAggregated();
-    }
+    function showModal(opts,cb){opts=opts||{}; var title=opts.title||'확인',message=opts.message||'',withInput=!!opts.withInput,def=opts.defaultValue||''; var bd=document.getElementById('dlgBackdrop'); var ti=document.getElementById('dlgTitle'); var mg=document.getElementById('dlgMsg'); var ip=document.getElementById('dlgInput'); var ok=document.getElementById('dlgOk'); var ca=document.getElementById('dlgCancel'); ti.textContent=title; mg.textContent=message; bd.style.display='flex'; bd.setAttribute('aria-hidden','false'); ip.style.display=withInput?'block':'none'; ip.value=withInput?def:''; if(withInput) ip.focus(); function cleanup(){bd.style.display='none'; bd.setAttribute('aria-hidden','true'); ok.onclick=null; ca.onclick=null; bd.onclick=null; document.onkeydown=null} ok.onclick=function(){var val=withInput?ip.value:true; cleanup(); if(cb) cb(withInput?String(val):true)}; ca.onclick=function(){cleanup(); if(cb) cb(withInput?null:false)}; bd.onclick=function(e){if(e.target===bd){cleanup(); if(cb) cb(withInput?null:false)}}; document.onkeydown=function(e){e=e||window.event; var key=e.key||e.keyCode; if(key==='Escape'||key===27){cleanup(); if(cb) cb(withInput?null:false)} if(key==='Enter'||key===13){ok.click()}} }
+    function confirmDialog(message,cb){showModal({title:'확인',message:message,withInput:false},cb)}
+    function promptDialog(message,def,cb){showModal({title:'입력',message:message,withInput:true,defaultValue:def||''},cb)}
 
-    // 인원 변경 시에도 제외번호 규칙 유지
-    function setCount(n){
-      var cur = getCurrent(); if(!cur) return; var want = n>0? n: 1;
-      var excluded = {}; for(var ei=0; ei<(settings.excluded||[]).length; ei++){ var v=parseInt(settings.excluded[ei],10); if(!isNaN(v)) excluded[v]=1; }
-      var targetNos=[]; var c=1; while(targetNos.length<want){ if(!excluded[c]) targetNos.push(c); c++; }
-      var out=[]; for(var j=0;j<targetNos.length;j++){ if(cur.items[j]){ cur.items[j].no=targetNos[j]; out.push(cur.items[j]); } else { out.push({ no:targetNos[j], name:'', status:'todo' }); } }
-      cur.items = out; cur.meta.count = out.length; cur.meta.updated = Date.now(); save(); renderMain(); renderSide();
-    }
-
-    function renderMain(){
-      var cur = getCurrent(); var grid = $('#grid');
-      if(!cur){ grid.innerHTML=''; ['s-todo','s-ok','s-doing','s-recheck','s-overdue','s-excluded'].forEach(function(id){ var el=document.getElementById(id); if(el) el.textContent='0명'; }); var bar=document.getElementById('bar'); if(bar) bar.style.width='0%'; return; }
-      $('#boardTitle').value = cur.meta.title; $('#studentCount').value = cur.meta.count;
-      var hideBtn = document.getElementById('hideCurrent'); if(hideBtn) hideBtn.textContent = cur.meta.hidden ? '보임' : '숨김';
-      grid.innerHTML = '';
-      for(var k=0;k<cur.items.length;k++){
-        var it = cur.items[k];
-        var card = document.createElement('div'); card.className = 'card ' + it.status; card.setAttribute('data-idx', String(k));
-        var no = document.createElement('div'); no.className='no'; no.textContent = String(it.no) + '번';
-        var nm = document.createElement('div'); nm.className='nm'; nm.textContent = it.name || '';
-        var btn = document.createElement('button'); btn.className='stateBtn'; btn.textContent = getStateLabel(it.status);
-        card.appendChild(no); card.appendChild(nm); card.appendChild(btn);
-        (function(idx){
-          card.addEventListener('click', function(ev){
-            if(ev.detail===2){
-              promptDialog(String(cur.items[idx].no)+'번 이름', cur.items[idx].name||'', function(newName){ if(newName!==null){ cur.items[idx].name=String(newName).replace(/^\s+|\s+$/g,''); cur.meta.updated=Date.now(); save(); renderMain(); renderSide(); } });
-              return;
-            }
-            cycleStatus(idx);
-          });
-        })(k);
-        grid.appendChild(card);
-      }
-      renderStats(cur); renderSummaryAggregated();
-    }
-
-    function getStateLabel(key){ for(var i=0;i<STATES.length;i++){ if(STATES[i].key===key) return STATES[i].label; } return key; }
-
-    function cycleStatus(idx){ var cur=getCurrent(); if(!cur) return; var it=cur.items[idx]; var pos=stateOrder.indexOf(it.status); var next=stateOrder[(pos+1)%stateOrder.length]; it.status=next; cur.meta.updated=Date.now(); save(); renderMain(); renderSide(); }
-
-    function renderStats(cur){
-      var total = cur.meta.count || 1; var count = { todo:0, ok:0, doing:0, recheck:0, overdue:0, excluded:0 };
-      for(var i=0;i<cur.items.length;i++){ count[cur.items[i].status]++; }
-      document.getElementById('s-todo').textContent = String(count.todo)+'명';
-      document.getElementById('s-ok').textContent = String(count.ok)+'명';
-      document.getElementById('s-doing').textContent = String(count.doing)+'명';
-      document.getElementById('s-recheck').textContent = String(count.recheck)+'명';
-      document.getElementById('s-overdue').textContent = String(count.overdue)+'명';
-      document.getElementById('s-excluded').textContent = String(count.excluded)+'명';
-      document.getElementById('bar').style.width = String(Math.round(count.ok*100/total)) + '%';
-    }
-
-    function renderSummaryAggregated(){
-      var containers = []; var g1 = document.getElementById('numGrid'); if(g1) containers.push(g1); var g2 = document.getElementById('numGridSide'); if(g2) containers.push(g2); if(containers.length===0) return;
-      var toggle = $('#toggleHidden'); var includeHidden = !!(toggle && toggle.checked);
-      var lists = []; for(var i=0;i<db.lists.length;i++){ if(includeHidden || !db.lists[i].meta.hidden) lists.push(db.lists[i]); }
-      var maxCount = 0; for(var j=0;j<lists.length;j++){ maxCount = Math.max(maxCount, lists[j].meta.count||0); }
-      var COMPLETED = { ok:1, recheck:1, excluded:1 };
-      for(var c=0;c<containers.length;c++){
-        var grid = containers[c]; grid.innerHTML='';
-        for(var n=0;n<maxCount;n++){
-          var attn=false; for(var li=0;li<lists.length;li++){ var it = lists[li].items[n]; if(!it) continue; if(!COMPLETED[it.status]){ attn=true; break; } }
-          var div = document.createElement('div'); div.className = 'numbtn' + (attn? ' attn':''); div.textContent = String(n+1); grid.appendChild(div);
-        }
-      }
-    }
-
-    // ===== confirm / prompt modal =====
-    function showModal(opts, cb){
-      opts = opts||{}; var title=opts.title||'확인', message=opts.message||'', withInput=!!opts.withInput, def=opts.defaultValue||'';
-      var bd = document.getElementById('dlgBackdrop'); var ti = document.getElementById('dlgTitle'); var mg = document.getElementById('dlgMsg'); var ip = document.getElementById('dlgInput'); var ok = document.getElementById('dlgOk'); var ca = document.getElementById('dlgCancel');
-      ti.textContent = title; mg.textContent = message; bd.style.display='flex'; bd.setAttribute('aria-hidden','false'); ip.style.display = withInput? 'block':'none'; ip.value = withInput? def:''; if(withInput) ip.focus();
-      function cleanup(){ bd.style.display='none'; bd.setAttribute('aria-hidden','true'); ok.onclick=null; ca.onclick=null; bd.onclick=null; document.onkeydown=null; }
-      ok.onclick = function(){ var val = withInput? ip.value: true; cleanup(); if(cb) cb(withInput? String(val): true); };
-      ca.onclick = function(){ cleanup(); if(cb) cb(withInput? null: false); };
-      bd.onclick = function(e){ if(e.target===bd){ cleanup(); if(cb) cb(withInput? null: false); } };
-      document.onkeydown = function(e){ e = e||window.event; var key = e.key || e.keyCode; if(key==='Escape' || key===27){ cleanup(); if(cb) cb(withInput? null: false);} if(key==='Enter' || key===13){ ok.click(); } };
-    }
-    function confirmDialog(message, cb){ showModal({ title:'확인', message:message, withInput:false }, cb); }
-    function promptDialog(message, def, cb){ showModal({ title:'입력', message:message, withInput:true, defaultValue:def||'' }, cb); }
-
-    // ===== bind all events =====
     function bind(){
-      $('#newList').addEventListener('click', function(){ var count = parseInt($('#studentCount').value||'18',10); var rawEl = $('#newTitle'); var raw = rawEl && rawEl.value ? rawEl.value.replace(/^\s+|\s+$/g,'') : ''; var title = raw || ('체크리스트 ' + (db.lists.length+1)); createList({ title:title, count:count }); if(rawEl) rawEl.value = ''; });
-      $('#toggleHidden').addEventListener('change', function(){ renderSide(); renderMain(); renderSummaryAggregated(); });
-      $('#listSearch').addEventListener('input', function(){ renderSide(); });
-      $('#studentCount').addEventListener('change', function(e){ setCount(parseInt(e.target.value,10)); });
-      $('#boardTitle').addEventListener('input', function(e){ var cur=getCurrent(); if(!cur) return; cur.meta.title=e.target.value; cur.meta.updated=Date.now(); save(); renderSide(); });
-      $('#hideCurrent').addEventListener('click', function(){ var cur=getCurrent(); if(!cur) return; cur.meta.hidden = !cur.meta.hidden; cur.meta.updated=Date.now(); save(); renderSide(); renderMain(); });
-      $('#deleteCurrent').addEventListener('click', function(){ var cur=getCurrent(); if(!cur) return; confirmDialog('삭제하겠습니까?', function(ok){ if(!ok) return; db.lists = db.lists.filter(function(x){ return x.meta.id!==cur.meta.id; }); currentId = (db.lists[0]&&db.lists[0].meta.id) || null; save(); renderSide(); renderMain(); }); });
-      $('#applyBulk').addEventListener('click', function(){ var cur=getCurrent(); if(!cur) return; var val = $('#bulkStatus').value; for(var i=0;i<cur.items.length;i++){ cur.items[i].status = val; } cur.meta.updated=Date.now(); save(); renderMain(); renderSide(); });
-      $('#applyNames').addEventListener('click', function(){ var cur=getCurrent(); if(!cur) return; var ta=$('#nameBulk'); var lines = ta ? ta.value.split(/\r?\n/).map(function(s){return s.replace(/^\s+|\s+$/g,'');}) : []; for(var i=0;i<cur.items.length;i++){ if(typeof lines[i]!== 'undefined') cur.items[i].name = lines[i]; } cur.meta.updated=Date.now(); save(); renderMain(); renderSide(); });
-
-      // 내보내기/가져오기
-      $('#exportBtn').addEventListener('click', function(){ var blob = new Blob([JSON.stringify(db,null,2)], {type:'application/json'}); var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'checkmon-' + new Date().toISOString().slice(0,10) + '.json'; a.click(); URL.revokeObjectURL(a.href); });
-      $('#importBtn').addEventListener('click', function(){ var inp = document.createElement('input'); inp.type='file'; inp.accept='application/json'; inp.onchange = function(){ var f = inp.files && inp.files[0]; if(!f) return; var reader = new FileReader(); reader.onload = function(){ try{ db = JSON.parse(reader.result); currentId = (db.lists && db.lists.filter(function(l){return !l.meta.hidden;})[0] && db.lists.filter(function(l){return !l.meta.hidden;})[0].meta.id) || (db.lists && db.lists[0] && db.lists[0].meta.id) || null; save(); renderSide(); renderMain(); } catch(e){ alert('가져오기 실패: '+ e.message); } }; reader.readAsText(f); }; inp.click(); });
-      $('#resetBtn').addEventListener('click', function(){ if(!window.confirm('모든 체크리스트를 삭제할까요?')) return; db = { lists: [] }; currentId = null; save(); renderSide(); renderMain(); });
-
-      // 설정 모달 이벤트
-      var openBtn = document.getElementById('openSettings'); if(openBtn){ openBtn.addEventListener('click', function(){ initSettingsUI(); document.getElementById('settingsBack').style.display='flex'; }); }
-      var closeBtn = document.getElementById('closeSettings'); if(closeBtn){ closeBtn.addEventListener('click', function(){ document.getElementById('settingsBack').style.display='none'; }); }
-      var saveEx = document.getElementById('saveExcluded'); if(saveEx){ saveEx.addEventListener('click', function(){ var raw=(document.getElementById('setExcluded').value||'').replace(/\s+/g,''); var arr=raw?raw.split(','):[]; var nums=[]; for(var i=0;i<arr.length;i++){ var x=parseInt(arr[i],10); if(!isNaN(x)) nums.push(x); } settings.excluded=nums; localStorage.setItem(STORAGE_SETTINGS, JSON.stringify(settings)); alert('제외 번호 저장 완료'); }); }
-      var saveNm = document.getElementById('saveNames'); if(saveNm){ saveNm.addEventListener('click', function(){ settings.useNames = !!document.getElementById('setUseNames').checked; var lines=(document.getElementById('setNames').value||'').split(/\r?\n/); var out=[]; for(var i=0;i<lines.length;i++){ var s=lines[i].replace(/^\s+|\s+$/g,''); if(s) out.push(s); } settings.names=out; localStorage.setItem(STORAGE_SETTINGS, JSON.stringify(settings)); alert('이름 설정 저장 완료'); }); }
+      $('#newList').addEventListener('click',function(){var count=parseInt($('#studentCount').value||'18',10); var rawEl=$('#newTitle'); var raw=rawEl&&rawEl.value?rawEl.value.replace(/^\s+|\s+$/g,''):''; var title=raw||('체크리스트 '+(db.lists.length+1)); createList({title:title,count:count}); if(rawEl) rawEl.value=''})
+      $('#toggleHidden').addEventListener('change',function(){renderSide();renderMain();renderSummaryAggregated()})
+      $('#listSearch').addEventListener('input',function(){renderSide()})
+      $('#studentCount').addEventListener('change',function(e){setCount(parseInt(e.target.value,10))})
+      $('#boardTitle').addEventListener('input',function(e){var cur=getCurrent(); if(!cur) return; cur.meta.title=e.target.value; cur.meta.updated=Date.now(); save(); renderSide()})
+      $('#hideCurrent').addEventListener('click',function(){var cur=getCurrent(); if(!cur) return; cur.meta.hidden=!cur.meta.hidden; cur.meta.updated=Date.now(); save(); renderSide(); renderMain()})
+      $('#deleteCurrent').addEventListener('click',function(){var cur=getCurrent(); if(!cur) return; confirmDialog('삭제하겠습니까?',function(ok){if(!ok) return; db.lists=db.lists.filter(function(x){return x.meta.id!==cur.meta.id}); currentId=(db.lists[0]&&db.lists[0].meta.id)||null; save(); renderSide(); renderMain()})})
+      $('#applyBulk').addEventListener('click',function(){var cur=getCurrent(); if(!cur) return; var val=$('#bulkStatus').value; for(var i=0;i<cur.items.length;i++){cur.items[i].status=val} cur.meta.updated=Date.now(); save(); renderMain(); renderSide()})
+      $('#applyNames').addEventListener('click',function(){var cur=getCurrent(); if(!cur) return; var ta=$('#nameBulk'); var lines=ta?ta.value.split(/\r?\n/).map(function(s){return s.replace(/^\s+|\s+$/g,'')}):[]; for(var i=0;i<cur.items.length;i++){ if(typeof lines[i]!== 'undefined') cur.items[i].name=lines[i]} cur.meta.updated=Date.now(); save(); renderMain(); renderSide()})
+      $('#exportBtn').addEventListener('click',function(){var blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}); var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='checkmon-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(a.href)})
+      $('#importBtn').addEventListener('click',function(){var inp=document.createElement('input'); inp.type='file'; inp.accept='application/json'; inp.onchange=function(){var f=inp.files&&inp.files[0]; if(!f) return; var reader=new FileReader(); reader.onload=function(){try{db=JSON.parse(reader.result); currentId=(db.lists&&db.lists[0]&&db.lists[0].meta.id)||null; save(); renderSide(); renderMain()}catch(e){alert('가져오기 실패: '+e.message)}}; reader.readAsText(f)}; inp.click()})
+      $('#resetBtn').addEventListener('click',function(){if(!window.confirm('모든 체크리스트를 삭제할까요?')) return; db={lists:[],meta:{schemaVersion:SCHEMA_VERSION}}; currentId=null; save(); renderSide(); renderMain()})
+      var openBtn=document.getElementById('openSettings'); if(openBtn){openBtn.addEventListener('click',function(){initSettingsUI(); document.getElementById('settingsBack').style.display='flex'})}
+      var closeBtn=document.getElementById('closeSettings'); if(closeBtn){closeBtn.addEventListener('click',function(){document.getElementById('settingsBack').style.display='none'})}
+      var saveEx=document.getElementById('saveExcluded'); if(saveEx){saveEx.addEventListener('click',function(){var raw=(document.getElementById('setExcluded').value||''); settings.excluded=parseExcludedInput(raw); localStorage.setItem(STORAGE_SETTINGS,JSON.stringify(settings)); alert('제외 번호 저장 완료')})}
+      var saveNm=document.getElementById('saveNames'); if(saveNm){saveNm.addEventListener('click',function(){settings.useNames=!!document.getElementById('setUseNames').checked; var lines=(document.getElementById('setNames').value||'').split(/\r?\n/); var out=[]; for(var i=0;i<lines.length;i++){var s=lines[i].replace(/^\s+|\s+$/g,''); if(s) out.push(s)} settings.names=out; localStorage.setItem(STORAGE_SETTINGS,JSON.stringify(settings)); alert('이름 설정 저장 완료')})}
     }
 
-    function initSettingsUI(){
-      var el; if((el=document.getElementById('setExcluded'))) el.value = (settings.excluded||[]).join(', ');
-      if((el=document.getElementById('setUseNames'))) el.checked = !!settings.useNames;
-      if((el=document.getElementById('setNames'))) el.value = (settings.names||[]).join('\n');
-    }
+    function initSettingsUI(){var el; if((el=document.getElementById('setExcluded'))) el.value=(settings.excluded||[]).join(', '); if((el=document.getElementById('setUseNames'))) el.checked=!!settings.useNames; if((el=document.getElementById('setNames'))) el.value=(settings.names||[]).join('\n')}
 
-    function boot(){
-      if(!db.lists.length) createList({}); else { var firstVisible=null; for(var i=0;i<db.lists.length;i++){ if(!db.lists[i].meta.hidden){ firstVisible = db.lists[i].meta.id; break; } } currentId = firstVisible || (db.lists[0] && db.lists[0].meta.id) || null; renderSide(); renderMain(); }
-      bind();
-      runTests();
-    }
+    function boot(){ if(!db||!db.lists) db={lists:[],meta:{schemaVersion:SCHEMA_VERSION}}; if(!db.lists.length) createList({}); else {currentId=(db.lists[0]&&db.lists[0].meta.id)||null; renderSide(); renderMain()} bind(); runTests() }
 
-    // 간단 테스트
-    function runTests(){ try{ var sample='가나\n다라\n마바'; var parsed=sample.split(/\r?\n/).map(function(s){return s.replace(/^\s+|\s+$/g,'');}); console.assert(parsed.length===3 && parsed[1]==='다라'); var order=['todo','ok','doing','recheck','overdue','excluded']; for(var i=0;i<order.length;i++){ var a=order[i],b=order[(i+1)%order.length]; var next=order[(order.indexOf(a)+1)%order.length]; console.assert(next===b); } }catch(e){} }
+    function runTests(){ try{ var sample='a\nb\nc'; var parsed=sample.split(/\r?\n/); console.assert(parsed.length===3&&parsed[1]==='b','newline parse'); var order=['todo','ok','doing','recheck','overdue','excluded']; for(var i=0;i<order.length;i++){var a=order[i],b=order[(i+1)%order.length]; var next=order[(order.indexOf(a)+1)%order.length]; console.assert(next===b,'cycle '+a+'->'+b)} }catch(e){console.error('테스트 실패',e)} }
 
     boot();
   })();
